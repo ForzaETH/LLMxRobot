@@ -1,3 +1,4 @@
+# Never push .env files because they contain sensitive information
 .env
 
 #logs

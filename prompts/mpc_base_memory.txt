@@ -1,0 +1,25 @@
+ This is the cost expression of the MPC, where all weights are tuneable:
+
+    model.cost_expr_ext_cost = (
+        weight_qn * n**2 + 
+        weight_qalpha * alpha**2 + 
+        weight_qv * (v - V_target)**2 + 
+        weight_qac * der_v**2 + 
+        weight_ddelta * derDelta**2 +
+        u.T @ R @ u
+    )
+
+
+    Here are the tuneable parameters of cost weights and constraints (STRICTLY ADHERE TO THESE NAMES, DONT INVENT NEW ONES!!!):
+    # param: min, max, default # description
+    qv 0, 2, 10 # weight for velocity tracking -> minimizes error in velocity tracking of the racing line
+    qn 0, 100, 20 # weight for lateral deviation tracking -> minimizes error in lateral deviation tracking of the racing line
+    qalpha 0, 100, 7 # weight for heading tracking -> minimizes error in heading error tracking of the racing line
+    qac 0, 1, 0.01 # weight for limiting the acceleration -> minimizes the acceleration of the vehicle
+    qddelta 0, 100, 0.1 # weight for limiting the steering angle rate -> minimizes the rate of change of the steering angle of the vehicle
+    alat_max 0, 20, 10 # maximum lateral acceleration -> constraints the lateral acceleration to be below alat_max
+    a_min -20, 0, -5 # minimum acceleration -> constraints the acceleration to be above a_min
+    a_max 0, 20, 5 # maximum acceleration -> constraints the acceleration to be below a_max
+    v_min -2, 5, 1 # minimum velocity -> constraints the velocity to be above v_min
+    v_max -1, 10, 5 # maximum velocity -> constraints the velocity to be below v_max
+    track_safety_margin 0, 1.0, 0.45 # inflation of the boundary of the track to increase the safety margin to the track walls

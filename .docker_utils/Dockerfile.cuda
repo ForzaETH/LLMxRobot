@@ -1,0 +1,73 @@
+# Use an official Nvidia runtime as a parent image
+FROM nvidia/cuda:11.8.0-devel-ubuntu20.04
+SHELL [ "/bin/bash", "-c" ]
+
+# CUDA ARCH 86 for RTX3090; 89 for RTX4070
+ARG CUDA_ARCH=86 
+# Set a non-interactive frontend (avoids some prompts)
+ARG DEBIAN_FRONTEND=noninteractive
+
+# Install necessary packages
+RUN apt-get update && apt-get install -y \
+    curl \
+    git \
+    libgl1-mesa-glx \
+    libglib2.0-0 \
+    build-essential \
+    net-tools \
+    x11-apps \
+    lsb-release \
+    findutils \
+    gnupg2 \
+    sudo
+
+# Clean up
+RUN apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+# Install linux requirements
+COPY linux_requirements.txt /embodiedai/linux_requirements.txt
+RUN apt-get update && apt-get install -y $(cat /embodiedai/linux_requirements.txt) && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+COPY requirements.txt /embodiedai/requirements.txt
+
+# Set Bash as the default shell
+SHELL ["/bin/bash", "-c"]
+# Install Python 3.10
+RUN apt-get update && \
+    apt-get install -y software-properties-common && \
+    add-apt-repository ppa:deadsnakes/ppa && \
+    apt-get update && \
+    apt-get install -y python3.10 python3.10-dev python3.10-distutils && \
+    update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.10 1 && \
+    update-alternatives --set python3 /usr/bin/python3.10
+
+# Install pip for Python 3.10
+RUN curl -sS https://bootstrap.pypa.io/get-pip.py | python3.10
+
+RUN pip install --upgrade pip setuptools wheel && \
+    pip install packaging && \
+    pip install torch==2.1.0+cu118 torchvision==0.16.0+cu118 torchaudio==2.1.0+cu118 --extra-index-url https://download.pytorch.org/whl/cu118
+
+# Install other Python dependencies
+RUN pip install -r /embodiedai/requirements.txt
+
+# Install flash-attn from GitHub (CUDA 11.8 support) using tested commit
+RUN git clone --recursive https://github.com/HazyResearch/flash-attention.git /tmp/flash-attn \
+ && cd /tmp/flash-attn \
+ && git checkout fd2fc9d85c8e54e5c20436465bca709bc1a6c5a1 \
+ && pip install . \
+ && rm -rf /tmp/flash-attn
+
+
+# Install llama-cpp-python seperately because of GPU support
+# Set ENV with CUDA arch
+ENV CMAKE_ARGS="-DGGML_CUDA=on -DLLAVA_BUILD=off -DCMAKE_CUDA_ARCHITECTURES=${CUDA_ARCH} -DCUDA_PATH=/usr/local/cuda-11.8 -DCUDAToolkit_ROOT=/usr/local/cuda-11.8 -DCUDAToolkit_INCLUDE_DIR=/usr/local/cuda-11/include -DCUDAToolkit_LIBRARY_DIR=/usr/local/cuda-11.8/lib64"
+ENV FORCE_CMAKE=1
+ENV LD_LIBRARY_PATH="/usr/local/cuda-11.8/compat/libcuda.so"
+RUN pip install llama-cpp-python==0.3.5 --no-cache-dir
+
+# Set the working directory
+WORKDIR /embodiedai

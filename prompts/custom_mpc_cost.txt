@@ -1,0 +1,49 @@
+This is dummy example of a custom cost function for the MPC. The cost function is defined as a weighted sum of the following terms:
+
+```python
+
+import numpy as np
+
+#cost function
+def custom_cost_function(x, u, p):
+    # Define parameters and matrix
+    weight_n = 100
+    weight_alpha = 0
+    weight_v = 0
+    weight_der_v = 0
+    weight_derDelta = 0
+    V_target = 1  # Target velocity
+    R = np.diag([1, 1])  # Control effort weights
+
+    # Cost expression
+    cost_expr = (
+        weight_n * x[1]**2 +
+        weight_alpha * x[2]**2 +
+        weight_v * (x[3] - V_target)**2 +
+        weight_der_v * u[0]**2 +
+        weight_derDelta * u[1]**2 +
+        u.T @ R @ u #It needs the input cost within the cost function
+    )
+    return cost_expr
+
+#Terminal cost function
+def custom_cost_function_e(x, u, p):
+    # Define parameters and matrix
+    weight_n = 100
+    weight_alpha = 0
+    weight_v = 0
+    weight_der_v = 0
+    weight_derDelta = 0
+    V_target = 1  # Target velocity
+
+    # Cost expression
+    cost_expr = (
+        weight_n * x[1]**2 +
+        weight_alpha * x[2]**2 +
+        weight_v * (x[3] - V_target)**2 +
+        weight_der_v * u[0]**2 +
+        weight_derDelta * u[1]**2
+    )
+    return cost_expr
+    
+```

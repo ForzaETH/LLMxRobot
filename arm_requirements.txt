@@ -1,0 +1,25 @@
+# Huggingface
+python-dotenv==1.0.1
+sentencepiece==0.2.0
+tokenizers==0.21.0
+transformers==4.47.1
+pillow==10.3.0
+
+# Langchain
+langchain==0.3.12
+langchain-experimental==0.3.3
+unstructured[md]==0.16.11
+langchain-openai==0.2.12
+
+# Unsloth & related
+scipy==1.14.1
+trl==0.13.0
+peft==0.14.0
+accelerate==1.2.1
+bitsandbytes==0.44.1
+
+# ROS stuff
+roslibpy==1.8.0
+
+# misc
+matplotlib==3.10.0

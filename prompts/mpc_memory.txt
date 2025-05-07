@@ -1,0 +1,96 @@
+# Memory Entry 0:
+Scenario:
+To force going forwards v_min should be positive. If you want it to be able to reverse, then set v_min to negative.
+MPC Action:
+mpc_params = {
+    'v_min': positive, if you want to go forwards, else negative to reverse
+}
+
+# Memory Entry 1:
+Scenario:
+Always have v_max be higher than v_min.
+MPC Action:
+mpc_params = {
+    'v_max': higher than v_min
+}
+
+# Memory Entry 2:
+Scenario:
+To drive far away from the walls, the boundary inflation should be increased. That way it will drive closer to the centerline. This is the most important to stay away from the walls.
+MPC Action:
+mpc_params = {
+    'track_safety_margin': high
+}
+
+# Memory Entry 3:
+Scenario:
+To reverse the car slowly on the racing line, the v_min must be negative!
+MP Action:
+mpc_params = {
+    'v_min': negative,
+}
+
+# Memory Entry 4:
+Scenario:
+To track the racing line better, the qalpha should be set high to track the heading. If you want the heading to be free, then set qalpha to 0.0.
+MPC Action:
+mpc_params = {
+    'qalpha': high, if you want to track the racing line or set it to 0.0 to have more freedom on the heading
+}
+
+# Memory Entry 5:
+Scenario:
+To track the racing line better, the qn should be high. If you want to drive a different trajectory, then set qn to 0.0, such that you can deviate from it.
+MPC Action:
+mpc_params = {
+    'qn': high to track the racing line, else any other trajectory: 0.0
+}
+
+# Memory Entry 6:
+Scenario:
+To be safer or to have better tracking, you can reduce v_max to approximately 4m/s. On the other hand, if you want to be more aggressive, then increase v_max to the maximum!
+MPC Action:
+mpc_params = {
+    'v_max': 4.0 for safety, else for maximum aggressiveness set it to the maximum
+}
+
+# Memory Entry 7:
+Scenario:
+To track the racing line better, the boundary inflation should be lower. If you want to stay away from the walls, then increase the boundary inflation.
+MPC Action:
+mpc_params = {
+    'track_safety_margin': lower for tracking the racing line, else high to stay away from the walls
+}
+
+# Memory Entry 8:
+Scenario:
+To force the car to reverse, the v_max should be negative!
+MP Action:
+mpc_params = {
+    'v_max': negative (but larger than v_min) to force the car to reverse
+}
+
+# Memory Entry 9:
+Scenario:
+To track a reference velocity better, the v_min and v_max should be set closely to the reference velocity.
+MPC Action:
+mpc_params = {
+    'v_min': slightly less than the reference velocity, 
+    'v_max': set to the reference velocity
+}
+
+# Memory Entry 10:
+Scenario:
+To minimize the lateral acceleration and jerk, set alat_max to a low value and a_min and a_max close to zero. If you want to drive more aggressive, then set alat_max to a higher value.
+MPC Action:
+mpc_params = {
+    'alat_max': low for minimizing lateral acceleration, else high for aggressive driving
+}
+
+# Memory Entry 11:
+Scenario:
+To drive smoother and reduce oscillations, increase qalpha. To drive jerky and aggressive, set qalpha to a low value.
+MPC Action:
+mpc_params = {
+    'qalpha': high for smoother driving, low for jerky and aggressive driving
+}

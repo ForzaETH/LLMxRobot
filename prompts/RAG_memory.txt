@@ -1,0 +1,32 @@
+# Hint 1:
+If the d-speed is above than 0.5m/s is high.
+
+# Hint 2:
+Unless specified differently by the human, the car is usually driving at speeds between 5 and 7m/s.
+
+# Hint 3:
+If the distance to a wall is smaller than 0.4m, the car is close to that wall. Staying close to the wall means maintaining a consistent distance below 0.4m.
+
+# Hint 4:
+If the s-speed is close to 0m/s, then the car is stopped.
+
+# Hint 5:
+The car is reversing if the s-speed is negative or if the s-coordinate is reducing over multiple samples.
+
+# Hint 6:
+A d-coordinate above 0.3m is considered not to be on the racing line.
+
+# Hint 7:
+If the d-coordinate oscillates from positive to negative values with larger magnitude than 0.3 metres, then the car is oscillating around the racing line.
+
+# Hint 8:
+Oscillations in d-coordinate under 0.3m or d-speed under 0.5m/s are negligible.
+
+# Hint 9:
+If the human requires you to drive at a certain speed, first calculate the current average speed and compare it to what the human wants. 
+
+# Hint 10:
+You are on the centerline if the left and right distances to the walls are about equal.
+
+# Hint 11:
+Unless told otherwise, you should be driving forwards!

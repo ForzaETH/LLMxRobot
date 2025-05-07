@@ -1,0 +1,18 @@
+The data has been sampled for 2.0 seconds in 5 samples.
+- The car's position along the racing line is given by the s-coordinate: [60.0, 60.25, 60.5, 60.75, 61.0]
+
+- The car's lateral deviation from the racing line is given by the d-coordinate: [0.0, -0.5753545647978832, -0.32641266653362183, 0.3901727040942701, 0.5477671504365765]
+
+- The car's speed along the racing line is given by the s-speed: [0.9576145990634815, 0.5100690745118428, 0.598160519871164, 0.789294135979236, 0.8423945285141192]
+
+- The car's speed perpendicular to the racing line is given by the d-speed: [-0.5902566276033918, -0.59449723461161, -0.08489652140578396, 0.0512708009967443, -0.03745596817162955]
+
+- The distance to the left wall is: [2.694233813545882, 2.605423973892499, 2.1277900096124538, 2.9040873438282255, 3.194765065388279]
+
+- The distance to the right wall is: [0.316882708096204, 0.24300351431392975, 0.30333191336205745, 0.3116525004013847, 0.31631822033359946]
+
+- Bool if the car has crashed: True
+
+- Bool if the car is facing the wall: False
+
+Explanation: This data depicts a scenario where the car is oscillating around the racing line, has dangerously high d-speed, is close to the right wall, and has crashed. 

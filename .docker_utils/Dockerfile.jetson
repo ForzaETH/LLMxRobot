@@ -1,0 +1,46 @@
+# Use a dusty image with torch
+FROM dustynv/l4t-pytorch:r36.2.0
+SHELL [ "/bin/bash", "-c" ]
+
+# Set a non-interactive frontend (avoids some prompts)
+ARG DEBIAN_FRONTEND=noninteractive
+
+# Install necessary packages
+RUN apt-get update && apt-get install -y \
+    curl \
+    wget \
+    git \
+    libgl1-mesa-glx \
+    libglib2.0-0 \
+    build-essential \
+    net-tools \
+    x11-apps \
+    lsb-release \
+    gnupg2 \
+    findutils \
+    python3-pip 
+
+# Clean up
+RUN apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+# Add the TeX Live repository and its GPG keys
+RUN echo "deb http://ftp.de.debian.org/debian buster main" >> /etc/apt/sources.list && \
+    apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 648ACFD622F3D138 && \
+    apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 0E98404D386FA1D9 && \
+    apt-key adv --keyserver keyserver.ubuntu.com --recv-keys DCC9EFBF77E11517 && \
+    apt-get update
+
+# Install Embodied AI Linux requirements
+COPY linux_requirements.txt /embodiedai/linux_requirements.txt
+
+COPY arm_requirements.txt /embodiedai/arm_requirements.txt
+RUN pip install -r /embodiedai/arm_requirements.txt
+
+# Install llama-cpp-python seperately because of GPU support
+ENV CMAKE_ARGS="-DGGML_CUDA=on -DCUDA_PATH=/usr/local/cuda-11.4 -DCUDAToolkit_ROOT=/usr/local/cuda-11.4 -DCUDAToolkit_INCLUDE_DIR=/usr/local/cuda-11/include -DCUDAToolkit_LIBRARY_DIR=/usr/local/cuda-11.4/lib64"
+ENV FORCE_CMAKE=1
+RUN pip install llama-cpp-python --no-cache-dir 
+
+# Set the working directory
+WORKDIR /embodiedai

@@ -1,0 +1,42 @@
+# === General Training Configuration ===
+training:
+  out_dir: "train/outputs"
+  dataset_dir: "train/dataset"     # W.r.t. the root directory of the repo
+  train_bool: true
+  chat_template: "qwen-2.5"        # Options: "phi-3" or "qwen-2.5"
+  seed: 3407
+  create_merged_model: true
+
+# === Model and Tokenizer ===
+model:
+  base_model: "unsloth/Qwen2.5-7B-Instruct"
+  load_in_4bit: true
+  max_seq_length: 2048
+  lora_alpha: 16
+  lora_rank: 16
+  target_modules:
+    - "q_proj"
+    - "k_proj"
+    - "v_proj"
+    - "o_proj"
+    - "gate_proj"
+    - "up_proj"
+    - "down_proj"
+  lora_dropout: 0
+  use_gradient_checkpointing: "unsloth"
+
+# === Trainer Arguments ===
+trainer:
+  max_steps: 150
+  per_device_train_batch_size: 2
+  gradient_accumulation_steps: 4
+  warmup_steps: 5
+  learning_rate: 0.0002
+  weight_decay: 0.01
+  logging_steps: 1
+  optim: "adamw_8bit"
+  lr_scheduler_type: "linear"
+
+# === Tokens ===
+tokens:
+  huggingfacehub: "${HUGGINGFACEHUB_API_TOKEN}"

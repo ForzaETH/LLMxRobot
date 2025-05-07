@@ -89,7 +89,7 @@ python3 llm_mpc.py --model custom --model_dir nibauman/RobotxLLM_Qwen7B_SFT --ho
 - `--quant`: Use quantized `GGUF` model
 - `--mpconly`: Skip DecisionxLLM
 
-As an **example** for on the jetson you can only run the quantized models with the models downloaded to the models folder as explained above. You can run the following command to test the quantized model:
+As an **example** for on the **Jetson** you can only run the quantized models with the models downloaded to the models folder as explained above. You can run the following command to test the quantized model:
 ```bash
 python3 llm_mpc.py --model custom --model_dir models/race_llm_q5 --hostip 192.168.192.75 --prompt "Drive in Reverse!" --quant
 ```
