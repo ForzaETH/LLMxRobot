@@ -133,7 +133,7 @@ python3 -m tests.decision_tester.decision_tester --model nibauman/RobotxLLM_Qwen
 - `--quant`: Use quantized model
 ---
 ## Acknowledgements
-SFT training 
+SFT training was performed through the distillation of [OpenAI GPT-4o](https://openai.com/index/hello-gpt-4o/) queries.
 This work would not have been possible without the great work of other repositories such as:
 - [llama.cpp](https://github.com/ggml-org/llama.cpp)
 - [Hugging Face](https://github.com/huggingface)
