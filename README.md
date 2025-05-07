@@ -131,7 +131,14 @@ python3 -m tests.decision_tester.decision_tester --model nibauman/RobotxLLM_Qwen
 - `--mini`: Run a small evaluation subset
 - `--rag`: Enable retrieval-augmented decision prompts
 - `--quant`: Use quantized model
-
+---
+## Acknowledgements
+SFT training 
+This work would not have been possible without the great work of other repositories such as:
+- [llama.cpp](https://github.com/ggml-org/llama.cpp)
+- [Hugging Face](https://github.com/huggingface)
+- [unsloth](https://github.com/unslothai/unsloth)
+- [roslibpy](https://github.com/gramaziokohler/roslibpy)
 ---
 
 ## 📄 Citation
