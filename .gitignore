@@ -1,0 +1,40 @@
+.env
+
+#logs
+**/logs/*.txt
+**/logs/**/
+
+#images
+*.png
+*.jpg
+*.jpeg
+*.JPG
+
+#pychache
+**/__pycache__/
+
+#vscode
+.vscode/
+
+#eval
+eval/*
+
+#No GGUFs
+*.gguf
+
+#Unsloth stuff
+**/_unsloth*
+**/unsloth_*
+
+#models
+models/*
+
+#wandb
+wandb/
+
+#MPC tester output
+tests/mpc_tester/eval/*
+
+#train outputs
+train/outputs/*
+train/dataset/combined/*
