@@ -136,7 +136,7 @@ python3 -m tests.decision_tester.decision_tester --model nibauman/RobotxLLM_Qwen
 
 ## 📄 Citation
 
-If you use this codebase, please cite:
+If this repository is useful for your research, please consider citing our work:
 
 ```bibtex
 @article{baumann2025enhancing,
