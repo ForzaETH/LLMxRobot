@@ -6,6 +6,8 @@ This repository accompanies our [RSS 2025 paper](https://arxiv.org/abs/2504.1151
   <img src=".misc/abstract_figure.png" width="600" alt="RobotxLLM Overview"\>
 </p\>
 
+Watch an explanatory Youtube video accompanying the paper [here](https://www.youtube.com/watch?v=4iGN1uBl4v4).
+
 ## 🚀 Installation
 
 ### CUDA Platform (e.g., RTX 30xx / 40xx)
