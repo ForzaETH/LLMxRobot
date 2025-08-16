@@ -584,7 +584,7 @@ class RaceLLMMPC():
     
     def _mpc_crash_detection(self, echo_nb: int=200, timeout: float=2.0):
         # Check if MPC has crapped its pants
-        drive_data_raw = self._echo_topic(topic="/drive", topic_type='ackermann_msgs/AckermannDriveStamped', number=echo_nb, timeout=timeout)
+        drive_data_raw = self._echo_topic(topic="/vesc/high_level/ackermann_cmd_mux/input/nav_1", topic_type='ackermann_msgs/AckermannDriveStamped', number=echo_nb, timeout=timeout)
         drive_data = self._filter_ackermann(drive_data_raw)
         no_steer = True if len(drive_data_raw) == 0 else False
         
