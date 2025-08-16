@@ -10,7 +10,7 @@ from langchain.indexes import VectorstoreIndexCreator
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 from langchain_core.documents import Document
 
-MODEL_OPTIONS = ['gpt-4o', 'custom']
+MODEL_OPTIONS = ['gpt-4o', 'custom', 'training']
 
 class RaceLLMMPC():
     def __init__(self, 
@@ -18,6 +18,7 @@ class RaceLLMMPC():
                  model,
                  model_dir=None,
                  quant=False,
+                 ros=None,
                  no_ROS=False,  
                  host_ip='192.168.192.105'):
         
@@ -37,13 +38,31 @@ class RaceLLMMPC():
         }
         
         # ROS stuff
-        if not no_ROS:
-            # Initialize ROS connection
-            self.ros = roslibpy.Ros(host=host_ip, port=9090)
-            self.ros.run()
-            self.dyn_client = self.init_mpc_dynconf(mpc_param_namespace='mpc_param_tuner')
-            self.raceline, self.odom_hz = self.init_race_data()
+        if no_ROS:
+            #We only want the access members of the class
+            self.ros = None
+            pass
+        else:
+            # ROS hook
+            if ros:
+                self.ros = ros
+            else:
+                self.ros = roslibpy.Ros(host=host_ip, port=9090)
+                self.ros.run()
+            self.mpc_param_namespace = 'mpc_param_tuner'
+            if not self.ros.is_connected:
+                raise ValueError("ROS connection failed. Please check the ROS master URI.")
+            #Check that the llm_mpc_controller is active and get the current mpc params
+            proceed_bool, diagnosis = self._check_llm_mpc_node()
+            while not proceed_bool:
+                print(diagnosis)
+                time.sleep(1)
+                proceed_bool, diagnosis = self._check_llm_mpc_node()
 
+            # Dynamic Reconfigure client
+            self.dyn_client = roslibpy.Service(self.ros, f'/{self.mpc_param_namespace}/set_parameters', 'dynamic_reconfigure/Reconfigure')
+            self.raceline, self.odom_hz = self.init_race_data()
+            
         # LLM stuff
         self.openai_token = openai_token
         self.quant = quant
@@ -257,6 +276,7 @@ class RaceLLMMPC():
     def init_llm(self, model: str, model_dir:str, openai_token: str) -> tuple:
         use_openai = False
         custom = False
+        llm = None
         if model not in MODEL_OPTIONS:
             raise ValueError(f"Model {model} not supported. Please use one of {MODEL_OPTIONS}")
         if model == 'gpt-4o':
@@ -275,6 +295,10 @@ class RaceLLMMPC():
                 from inference.inf_pipeline import RaceLLMPipeline
                 llm = RaceLLMPipeline(model_dir=model_dir, chat_template='qwen-2.5', load_in_4bit=True)
             custom = True
+        elif model == 'training':
+            # passing for RobotxR1 style training
+            print("Not setting a model because we are training and using race_llm just as a vessel to interact with ROS and utils.")
+            pass
         else:
             raise ValueError(f"Something went wrong with the model selection: {model}")
         return llm, custom, use_openai

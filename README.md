@@ -65,14 +65,14 @@ huggingface-cli download nibauman/race_llm-Q5_K_M-GGUF --local-dir models/race_l
 
 ## 🧠 Usage
 
-This repo integrates with the [ForzaETH Race Stack](https://github.com/ForzaETH/race_stack). Follow their installation instructions and ensure your `ROS_MASTER_URI` is correctly configured (see [example line](https://github.com/ForzaETH/race_stack/blob/main/.devcontainer/.install_utils/bashrc_ext#L12)) in this readme we use 192.168.192.75 as an example!
+This repo integrates with the [ForzaETH Race Stack](https://github.com/ForzaETH/race_stack). Follow their installation instructions and ensure your `ROS_MASTER_URI` is correctly configured (see [example line](https://github.com/ForzaETH/race_stack/blob/main/.devcontainer/.install_utils/bashrc_ext#L12)) in this readme we use 192.168.192.75 as an example (Check $ROS_HOSTNAME when running the race_stack)!
 
 ### On the Robot Stack
 Run each command in a separate terminal.
 ```bash
 roscore
 roslaunch stack_master base_system.launch map_name:=f racecar_version:=NUC2 sim:=true
-roslaunch stack_master timetrials.launch ctrl_algo:=KMPC
+roslaunch stack_master time_trials.launch ctrl_algo:=KMPC
 roslaunch rosbridge_server rosbridge_websocket.launch address:=192.168.192.75
 ```
 
