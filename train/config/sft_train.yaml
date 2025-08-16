@@ -1,7 +1,7 @@
 # === General Training Configuration ===
 training:
   out_dir: "train/outputs"
-  dataset_dir: "train/dataset"     # W.r.t. the root directory of the repo
+  dataset_dir: "train/dataset/sft"     # W.r.t. the root directory of the repo
   train_bool: true
   chat_template: "qwen-2.5"        # Options: "phi-3" or "qwen-2.5"
   seed: 3407
@@ -40,3 +40,4 @@ trainer:
 # === Tokens ===
 tokens:
   huggingfacehub: "${HUGGINGFACEHUB_API_TOKEN}"
+  wandb: "${WANDB_API_KEY}"
