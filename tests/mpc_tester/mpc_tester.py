@@ -407,7 +407,8 @@ if __name__ == '__main__':
     # Run tests and plot results
     tester.run_tests(num_tests=None, num_memories=5)
     
-    # Example command: 
-    # python3 -m tests.mpc_tester.mpc_tester --model custom --model_dir nibauman/RobotxLLM_Qwen7B_SFT --host_ip 192.168.192.75 --chat_template qwen-2.5
+    # Example commands:
+    # With ROS: python3 -m tests.mpc_tester.mpc_tester --model custom --model_dir nibauman/RobotxLLM_Qwen7B_SFT --host_ip 192.168.192.75 --chat_template qwen-2.5
+    # Headless: python3 -m tests.mpc_tester.mpc_tester --model gpt-4o --no_ROS
     
     
