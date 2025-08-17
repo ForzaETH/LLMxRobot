@@ -53,7 +53,7 @@ class Tester:
             "track_safety_margin": 0.3
         }
 
-    def test(self, test_case: str, memory_nb: int = 5):
+    def test(self, test_case: str, prompt: str, memory_nb: int = 5, ref_val: float = None):
         raceline_raw = self.racechat._echo_topic(topic="/global_waypoints", topic_type="f110_msgs/WpntArray", number=1)
         raceline = self.racechat._filter_raceline(raceline=raceline_raw)
         command = None
@@ -65,10 +65,10 @@ class Tester:
         self.reset_mpc_params()
         
         print(f"STARTING TEST CASE: {test_case}, Memory Number: {memory_nb}")
+        start_time = time.time()
+        command, llm_expl, mem_sources, _, _ = self.racechat.race_mpc_interact(scenario=prompt, memory_nb=memory_nb)
+        llm_inf_latency = time.time() - start_time
         if test_case == "center":
-            start_time = time.time()
-            command, llm_expl, mem_sources, _, _ = self.racechat.race_mpc_interact(scenario="Drive as far away from the walls as possible!", memory_nb=memory_nb)
-            llm_inf_latency = time.time() - start_time
             if command:
                 self.racechat._reset_car()
                 data_raw = self.racechat._echo_topic_over_one_lap(topic="/car_state/odom_frenet", topic_type='nav_msgs/Odometry',  timeout=self.timeout)
@@ -78,9 +78,6 @@ class Tester:
                 # Fails to generate command, return high RMSE
                 rmse = 69.0
         elif test_case == "raceline":
-            start_time = time.time()
-            command, llm_expl, mem_sources, _, _ = self.racechat.race_mpc_interact(scenario="Track the raceline as well as possible, even if this sacrifices laptime!", memory_nb=memory_nb)
-            llm_inf_latency = time.time() - start_time
             if command:
                 self.racechat._reset_car()
                 data_raw = self.racechat._echo_topic_over_one_lap(topic="/car_state/odom_frenet", topic_type='nav_msgs/Odometry',  timeout=self.timeout)
@@ -90,9 +87,6 @@ class Tester:
                 # Fails to generate command, return high RMSE
                 rmse = 69.0
         elif test_case == "reverse":
-            start_time = time.time()
-            command, llm_expl, mem_sources, _, _ = self.racechat.race_mpc_interact(scenario=f"Drive the track in reverse at {self.rev_target_speed} m/s!", memory_nb=memory_nb)
-            llm_inf_latency = time.time() - start_time
             if command:
                 self.racechat._reset_car()
                 data_raw = self.racechat._echo_topic(topic="/car_state/odom_frenet", topic_type='nav_msgs/Odometry',  number= self.test_samples, timeout=self.timeout)
@@ -102,21 +96,15 @@ class Tester:
                 # Fails to generate command, return high RMSE
                 rmse = 69.0
         elif test_case == "refvel":
-            start_time = time.time()
-            command, llm_expl, mem_sources, _, _ = self.racechat.race_mpc_interact(scenario=f"Follow the reference velocity of {self.target_speed} m/s as closely as possible!", memory_nb=memory_nb)
-            llm_inf_latency = time.time() - start_time
             if command:
                 self.racechat._reset_car()
                 data_raw = self.racechat._echo_topic_over_one_lap(topic="/car_state/odom_frenet", topic_type='nav_msgs/Odometry', timeout=self.timeout)
                 data = self.racechat._filter_odom(odom=data_raw)
-                rmse = self.refvel_rmse(data=data, target_speed=self.target_speed)
+                rmse = self.refvel_rmse(data=data, target_speed=ref_val)
             else:
                 # Fails to generate command, return high RMSE
                 rmse = 69.0
         elif test_case == "smooth":
-            start_time = time.time()
-            command, llm_expl, mem_sources, _, _ = self.racechat.race_mpc_interact(scenario="Reduce jerkyness!", memory_nb=memory_nb)
-            llm_inf_latency = time.time() - start_time
             if command:
                 self.racechat._reset_car()
                 data_raw = self.racechat._echo_topic_over_one_lap(topic="/vesc/sensors/imu/raw", topic_type='sensor_msgs/Imu', timeout=self.timeout)
@@ -129,8 +117,8 @@ class Tester:
             raise ValueError("Invalid test case")
 
         return {'mem_nb': memory_nb, 'llm_cmd': command, 'llm_expl': llm_expl, 'llm_inf_latency': llm_inf_latency, 'rmse': rmse, 'case': test_case, 'mem_sources': mem_sources}
-    
-    def default_test(self, test_case: str):
+      
+    def default_test(self, test_case: str, ref_val: float = None):
         raceline_raw = self.racechat._echo_topic(topic="/global_waypoints", topic_type="f110_msgs/WpntArray", number=1)
         raceline = self.racechat._filter_raceline(raceline=raceline_raw)
         data = None
@@ -157,7 +145,7 @@ class Tester:
             self.racechat._reset_car()
             data_raw = self.racechat._echo_topic_over_one_lap(topic="/car_state/odom_frenet", topic_type='nav_msgs/Odometry', timeout=self.timeout)
             data = self.racechat._filter_odom(odom=data_raw)
-            rmse = self.refvel_rmse(data=data, target_speed=self.target_speed)
+            rmse = self.refvel_rmse(data=data, target_speed=ref_val)
         elif test_case == "smooth":
             self.racechat._reset_car()
             data_raw = self.racechat._echo_topic_over_one_lap(topic="/vesc/sensors/imu/raw", topic_type='sensor_msgs/Imu', timeout=self.timeout)
@@ -167,26 +155,43 @@ class Tester:
             raise ValueError("Invalid test case")
         
         return rmse
-
+    
     def run_tests(self, num_tests: int, num_memories: int):
-        for test_case in TEST_OPTIONS:
+        all_reports = {}
+        for test_case in EVAL_DRIVING_CASES.keys():
+            all_reports[test_case] = {"subcases": {}}
+            default_results = np.ones(len(EVAL_DRIVING_CASES[test_case]))
+            per_case_rmses = np.zeros(len(EVAL_DRIVING_CASES[test_case]))
             if num_tests is not None:
                 print(f"Running {num_tests} tests for {test_case} test case")
                 default_results = self.default_test(test_case=test_case)
-                results = self.run_single_test(test_case=test_case, num_tests=num_tests)
+                result = self.run_single_test(test_case=test_case, num_tests=num_tests)
             else:
-                print(f"Running SINGLE {num_memories} memory test for {test_case} test case")
-                default_results = self.default_test(test_case=test_case)
-                result = self.test(test_case=test_case, memory_nb=num_memories)
-                results = [result]
+                for index, prompt in enumerate(EVAL_DRIVING_CASES[test_case]):
+                    all_reports[test_case][str(index)] = {}
+                    print(f"Running SINGLE {num_memories} memory test for prompt number {index+1} of the {test_case} test case")
+                    if test_case == "refvel":
+                        ref_val = prompt['ref_val']
+                    else:
+                        ref_val = None
+                    default_results[index] = self.default_test(test_case=test_case, ref_val=ref_val)
+                    per_case_result = self.test(test_case=test_case, prompt=prompt['human_prompt'], memory_nb=num_memories, ref_val=ref_val)
+                    per_case_rmses[index] = per_case_result['rmse']
+                    all_reports[test_case]["subcases"][str(index)] = {"result": per_case_result}
+                    all_reports[test_case]["subcases"][str(index)]["default_rmse"] = default_results[index]
+                    all_reports[test_case]["subcases"][str(index)]["logfile"] = self.generate_md_report(per_case_result, default_results[index], test_case, index)
+            
+            per_case_avg_rmse = np.mean(np.delete(per_case_rmses,np.where(per_case_rmses==69.0)))
+            per_case_std_rmse = np.std(np.delete(per_case_rmses,np.where(per_case_rmses==69.0)))
+            per_case_avg_default_rmse = np.mean(default_results)
+            per_case_std_default_rmse = np.std(default_results)
+            all_reports[test_case]["avg_rmse"] = per_case_avg_rmse
+            all_reports[test_case]["std_rmse"] = per_case_std_rmse
+            all_reports[test_case]["avg_default_rmse"] = per_case_avg_default_rmse
+            all_reports[test_case]["std_default_rmse"] = per_case_std_default_rmse
+            all_reports[test_case]["avg_rmse_improvement"] = (per_case_avg_default_rmse - per_case_avg_rmse) / per_case_avg_default_rmse
+        return all_reports
     
-            try:
-                plot_path = self.plot_results(results, default_rmse=default_results)
-            except Exception as e:
-                print(f"Error plotting results: {e}")
-                plot_path = os.path.join(self.eval_dir, f"{test_case}_evaluation_results.png")
-            self.generate_md_report(results, plot_path, default_results)
-
     def run_single_test(self, test_case: str, num_tests: int):
         results = []
         for i in range(num_tests):
@@ -338,26 +343,24 @@ class Tester:
         print("USING DUMMY DEFAULT RMSE VALUE FOR REPORTING PURPOSES")
         self.generate_md_report(results, plot_path, 69)
 
-    def generate_md_report(self, results, plot_path, default_rmse):
-        test_case = results[0]['case']
-        report_path = os.path.join(self.eval_dir, f"{self.model_name}_{test_case}_evaluation_report.md")
-
+    def generate_md_report(self, results, default_rmse, test_case, index):
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        report_path = os.path.join(self.eval_dir, f"step-{self.current_step}/{test_case}_{index}_evaluation_report_{timestamp}.md")
+        os.makedirs(os.path.dirname(report_path), exist_ok=True)
         with open(report_path, 'w') as f:
             f.write(f"#{self.model_name} {test_case.capitalize()} Evaluation Report\n\n")
-            #Use relative plot path for markdown
-            plot_filename = os.path.basename(plot_path)
-            f.write(f"![Evaluation Results]({plot_filename})\n\n")
             f.write(f"#### Default RMSE: {default_rmse:.3f}[m]\n")
             f.write("## Test Results\n")
-            for result in results:
-                f.write(f"### Memory Number: {result['mem_nb']}\n")
-                f.write(f"- **RMSE [m]**: {result['rmse']}\n")
-                f.write(f"- **LLM Inference Latency [s]**: {result['llm_inf_latency']}\n")
-                f.write(f"- **LLM Explanation**: {result['llm_expl']}\n")
-                f.write(f"- **Generated Command**: {result['llm_cmd']}\n")
-                f.write(f"- **Memory Sources**: {result['mem_sources']}\n\n")
+            f.write(f"### Memory Number: {results['mem_nb']}\n")
+            f.write(f"- **RMSE [m]**: {results['rmse']}\n")
+            f.write(f"- **LLM Inference Latency [s]**: {results['llm_inf_latency']}\n")
+            f.write(f"- **LLM Explanation**: {results['llm_expl']}\n")
+            f.write(f"- **Generated Command**: {results['llm_cmd']}\n")
+            f.write(f"- **Memory Sources**: {results['mem_sources']}\n\n")
 
         print(f"Markdown report generated at: {report_path}")
+        return report_path
+
 
 # Wrapper for running eval during RL-training
 class TrainingTester(Tester):
@@ -386,164 +389,6 @@ class TrainingTester(Tester):
         self.racechat.use_openai = False
         print(f"Testing in TrainingTester using custom model: {custom_model} with tokenizer: {custom_tokenizer} and chat template: {custom_chat_template}")
     
-    # Overwrite the run_tests method to handle training test generation
-    def run_tests(self, num_tests: int, num_memories: int):
-        all_reports = {}
-        for test_case in EVAL_DRIVING_CASES.keys():
-            all_reports[test_case] = {"subcases": {}}
-            default_results = np.ones(len(EVAL_DRIVING_CASES[test_case]))
-            per_case_rmses = np.zeros(len(EVAL_DRIVING_CASES[test_case]))
-            if num_tests is not None:
-                print(f"Running {num_tests} tests for {test_case} test case")
-                default_results = self.default_test(test_case=test_case)
-                result = self.run_single_test(test_case=test_case, num_tests=num_tests)
-            else:
-                for index, prompt in enumerate(EVAL_DRIVING_CASES[test_case]):
-                    all_reports[test_case][str(index)] = {}
-                    print(f"Running SINGLE {num_memories} memory test for prompt number {index+1} of the {test_case} test case")
-                    if test_case == "refvel":
-                        ref_val = prompt['ref_val']
-                    else:
-                        ref_val = None
-                    default_results[index] = self.default_test(test_case=test_case, ref_val=ref_val)
-                    per_case_result = self.test(test_case=test_case, prompt=prompt['human_prompt'], memory_nb=num_memories, ref_val=ref_val)
-                    per_case_rmses[index] = per_case_result['rmse']
-                    all_reports[test_case]["subcases"][str(index)] = {"result": per_case_result}
-                    all_reports[test_case]["subcases"][str(index)]["default_rmse"] = default_results[index]
-                    all_reports[test_case]["subcases"][str(index)]["logfile"] = self.generate_md_report(per_case_result, default_results[index], test_case, index)
-            
-            per_case_avg_rmse = np.mean(np.delete(per_case_rmses,np.where(per_case_rmses==69.0)))
-            per_case_std_rmse = np.std(np.delete(per_case_rmses,np.where(per_case_rmses==69.0)))
-            per_case_avg_default_rmse = np.mean(default_results)
-            per_case_std_default_rmse = np.std(default_results)
-            all_reports[test_case]["avg_rmse"] = per_case_avg_rmse
-            all_reports[test_case]["std_rmse"] = per_case_std_rmse
-            all_reports[test_case]["avg_default_rmse"] = per_case_avg_default_rmse
-            all_reports[test_case]["std_default_rmse"] = per_case_std_default_rmse
-            all_reports[test_case]["avg_rmse_improvement"] = (per_case_avg_default_rmse - per_case_avg_rmse) / per_case_avg_default_rmse
-        return all_reports
-    
-    def default_test(self, test_case: str, ref_val: float = None):
-        raceline_raw = self.racechat._echo_topic(topic="/global_waypoints", topic_type="f110_msgs/WpntArray", number=1)
-        raceline = self.racechat._filter_raceline(raceline=raceline_raw)
-        data = None
-        rmse = None
-        # print('Reseting MPC params')
-        self.reset_mpc_params()
-        print(f"GETTING DEFAULTS FOR TEST CASE: {test_case}")
-        if test_case == "center":
-            self.racechat._reset_car()
-            data_raw = self.racechat._echo_topic_over_one_lap(topic="/car_state/odom_frenet", topic_type='nav_msgs/Odometry',timeout=self.timeout)
-            data = self.racechat._filter_odom(odom=data_raw)
-            rmse = self.center_rmse(data=data, raceline=raceline)
-        elif test_case == "raceline":
-            self.racechat._reset_car()
-            data_raw = self.racechat._echo_topic_over_one_lap(topic="/car_state/odom_frenet", topic_type='nav_msgs/Odometry', timeout=self.timeout)
-            data = self.racechat._filter_odom(odom=data_raw)
-            rmse = self.raceline_rmse(data=data)
-        elif test_case == "reverse":
-            self.racechat._reset_car()
-            data_raw = self.racechat._echo_topic_over_one_lap(topic="/car_state/odom_frenet", topic_type='nav_msgs/Odometry', number= self.test_samples, timeout=self.timeout)
-            data = self.racechat._filter_odom(odom=data_raw)
-            rmse = self.reverse_rmse(data=data, target_speed=self.rev_target_speed)
-        elif test_case == "refvel":
-            self.racechat._reset_car()
-            data_raw = self.racechat._echo_topic_over_one_lap(topic="/car_state/odom_frenet", topic_type='nav_msgs/Odometry', timeout=self.timeout)
-            data = self.racechat._filter_odom(odom=data_raw)
-            rmse = self.refvel_rmse(data=data, target_speed=ref_val)
-        elif test_case == "smooth":
-            self.racechat._reset_car()
-            data_raw = self.racechat._echo_topic_over_one_lap(topic="/vesc/sensors/imu/raw", topic_type='sensor_msgs/Imu', timeout=self.timeout)
-            data = self.racechat._filter_imu(imu=data_raw)
-            rmse = self.smooth_rmse(data=data)
-        else:
-            raise ValueError("Invalid test case")
-        
-        return rmse
-    
-    def test(self, test_case: str, prompt: str, memory_nb: int = 5, ref_val: float = None):
-        raceline_raw = self.racechat._echo_topic(topic="/global_waypoints", topic_type="f110_msgs/WpntArray", number=1)
-        raceline = self.racechat._filter_raceline(raceline=raceline_raw)
-        command = None
-        llm_expl = None
-        llm_inf_latency = None
-        data = None
-        rmse = 0.6969
-        print('Reseting MPC params')
-        self.reset_mpc_params()
-        
-        print(f"STARTING TEST CASE: {test_case}, Memory Number: {memory_nb}")
-        start_time = time.time()
-        command, llm_expl, mem_sources, _, _ = self.racechat.race_mpc_interact(scenario=prompt, memory_nb=memory_nb)
-        llm_inf_latency = time.time() - start_time
-        if test_case == "center":
-            if command:
-                self.racechat._reset_car()
-                data_raw = self.racechat._echo_topic_over_one_lap(topic="/car_state/odom_frenet", topic_type='nav_msgs/Odometry',  timeout=self.timeout)
-                data = self.racechat._filter_odom(odom=data_raw)
-                rmse = self.center_rmse(data=data, raceline=raceline)
-            else:
-                # Fails to generate command, return high RMSE
-                rmse = 69.0
-        elif test_case == "raceline":
-            if command:
-                self.racechat._reset_car()
-                data_raw = self.racechat._echo_topic_over_one_lap(topic="/car_state/odom_frenet", topic_type='nav_msgs/Odometry',  timeout=self.timeout)
-                data = self.racechat._filter_odom(odom=data_raw)
-                rmse = self.raceline_rmse(data=data)
-            else:
-                # Fails to generate command, return high RMSE
-                rmse = 69.0
-        elif test_case == "reverse":
-            if command:
-                self.racechat._reset_car()
-                data_raw = self.racechat._echo_topic(topic="/car_state/odom_frenet", topic_type='nav_msgs/Odometry',  number= self.test_samples, timeout=self.timeout)
-                data = self.racechat._filter_odom(odom=data_raw)
-                rmse = self.reverse_rmse(data=data, target_speed=self.rev_target_speed)
-            else:
-                # Fails to generate command, return high RMSE
-                rmse = 69.0
-        elif test_case == "refvel":
-            if command:
-                self.racechat._reset_car()
-                data_raw = self.racechat._echo_topic_over_one_lap(topic="/car_state/odom_frenet", topic_type='nav_msgs/Odometry', timeout=self.timeout)
-                data = self.racechat._filter_odom(odom=data_raw)
-                rmse = self.refvel_rmse(data=data, target_speed=ref_val)
-            else:
-                # Fails to generate command, return high RMSE
-                rmse = 69.0
-        elif test_case == "smooth":
-            if command:
-                self.racechat._reset_car()
-                data_raw = self.racechat._echo_topic_over_one_lap(topic="/vesc/sensors/imu/raw", topic_type='sensor_msgs/Imu', timeout=self.timeout)
-                data = self.racechat._filter_imu(imu=data_raw) # returns dict with keys: 'ax', 'ay'
-                rmse = self.smooth_rmse(data=data)
-            else:
-                # Fails to generate command, return high RMSE
-                rmse = 69.0
-        else:
-            raise ValueError("Invalid test case")
-
-        return {'mem_nb': memory_nb, 'llm_cmd': command, 'llm_expl': llm_expl, 'llm_inf_latency': llm_inf_latency, 'rmse': rmse, 'case': test_case, 'mem_sources': mem_sources}
-            
-    def generate_md_report(self, results, default_rmse, test_case, index):
-        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-        report_path = os.path.join(self.eval_dir, f"step-{self.current_step}/{test_case}_{index}_evaluation_report_{timestamp}.md")
-        os.makedirs(os.path.dirname(report_path), exist_ok=True)
-        with open(report_path, 'w') as f:
-            f.write(f"#{self.model_name} {test_case.capitalize()} Evaluation Report\n\n")
-            f.write(f"#### Default RMSE: {default_rmse:.3f}[m]\n")
-            f.write("## Test Results\n")
-            f.write(f"### Memory Number: {results['mem_nb']}\n")
-            f.write(f"- **RMSE [m]**: {results['rmse']}\n")
-            f.write(f"- **LLM Inference Latency [s]**: {results['llm_inf_latency']}\n")
-            f.write(f"- **LLM Explanation**: {results['llm_expl']}\n")
-            f.write(f"- **Generated Command**: {results['llm_cmd']}\n")
-            f.write(f"- **Memory Sources**: {results['mem_sources']}\n\n")
-
-        print(f"Markdown report generated at: {report_path}")
-        return report_path
-
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Run the Tester with a specified model.')
     parser.add_argument('--model', choices=MODEL_OPTIONS, help='The model to use for the Tester.')    
