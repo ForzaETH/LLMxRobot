@@ -10,7 +10,7 @@ CHAT_TEMPLATE_OPTIONS = ["phi-3", "qwen-2.5"]
 TEST_OPTIONS = ['center', 'reverse', 'refvel', 'smooth']
 
 class Tester:
-    def __init__(self, openai_token, model_type, model_dir, quant, run_name, step, host_ip, no_ROS=False):
+    def __init__(self, openai_token, model_type, model_dir, quant, run_name, step, host_ip, no_ROS=False, **kwargs):
         """
         Initialize Tester for LLM MPC evaluation.
         
@@ -23,13 +23,18 @@ class Tester:
             step: Current step number
             host_ip: ROS host IP address
             no_ROS: Run in headless mode without ROS connection (default: False)
+            **kwargs: Additional keyword arguments to pass to RaceLLMMPC for future compatibility
         """
-        self.racechat: RaceLLMMPC = RaceLLMMPC(openai_token=openai_token, 
-                                               model=model_type, 
-                                               model_dir=model_dir,
-                                               quant=quant,
-                                               no_ROS=no_ROS,
-                                               host_ip=host_ip)
+        # Pass all arguments to RaceLLMMPC as keyword arguments for future compatibility
+        self.racechat: RaceLLMMPC = RaceLLMMPC(
+            openai_token=openai_token, 
+            model=model_type, 
+            model_dir=model_dir,
+            quant=quant,
+            no_ROS=no_ROS,
+            host_ip=host_ip,
+            **kwargs
+        )
         
         self.model_name = model_type
         self.test_samples = 5000
