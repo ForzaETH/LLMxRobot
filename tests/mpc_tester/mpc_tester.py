@@ -3,18 +3,33 @@ from datetime import datetime
 from dotenv import load_dotenv, find_dotenv
 from langchain_experimental.llm_bash.bash import BashProcess
 from llm_mpc import RaceLLMMPC, MODEL_OPTIONS
-from inference.inf_pipeline import CHAT_TEMPLATE_OPTIONS
 import matplotlib.pyplot as plt
 
+# Define chat template options locally to avoid heavy dependencies
+CHAT_TEMPLATE_OPTIONS = ["phi-3", "qwen-2.5"]
 TEST_OPTIONS = ['center', 'reverse', 'refvel', 'smooth']
 
 class Tester:
-    def __init__(self, openai_token, model_type, model_dir, quant, run_name, step, host_ip):
+    def __init__(self, openai_token, model_type, model_dir, quant, run_name, step, host_ip, no_ROS=False):
+        """
+        Initialize Tester for LLM MPC evaluation.
+        
+        Args:
+            openai_token: OpenAI API token
+            model_type: Model type to use (from MODEL_OPTIONS)
+            model_dir: Directory path for custom models (optional)
+            quant: Whether to use quantization for custom models
+            run_name: Name for this test run
+            step: Current step number
+            host_ip: ROS host IP address
+            no_ROS: Run in headless mode without ROS connection (default: False)
+        """
         self.racechat: RaceLLMMPC = RaceLLMMPC(openai_token=openai_token, 
                                                model=model_type, 
                                                model_dir=model_dir,
                                                quant=quant,
-                                               host_ip=host_ip,)
+                                               no_ROS=no_ROS,
+                                               host_ip=host_ip)
         
         self.model_name = model_type
         self.test_samples = 5000
@@ -364,6 +379,7 @@ if __name__ == '__main__':
     parser.add_argument('--quant', action='store_true', help='Use quantization for the custom model, needs to be downloaded in models/ folder and dir towards it.')
     parser.add_argument('--chat_template', choices=CHAT_TEMPLATE_OPTIONS, default=CHAT_TEMPLATE_OPTIONS[-1], type=str, help='The chat template to use for the Tester.')
     parser.add_argument('--host_ip', type=str, default='192.168.192.107', help='ROS IP address for the SIM.')
+    parser.add_argument('--no_ROS', action='store_true', help='Run in headless mode without ROS connection for testing.')
     args = parser.parse_args()
 
     load_dotenv(find_dotenv())
@@ -380,7 +396,8 @@ if __name__ == '__main__':
                     quant=args.quant,
                     run_name=run_name,
                     step=0,
-                    host_ip=args.host_ip) 
+                    host_ip=args.host_ip,
+                    no_ROS=args.no_ROS) 
 
     # Run tests and plot results
     tester.run_tests(num_tests=None, num_memories=5)
