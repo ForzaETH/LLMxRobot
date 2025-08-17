@@ -17,7 +17,7 @@ import roslibpy
 from train.utils.mpc.mpc_dataset import MPCDatasetGRPO
 import train.utils.mpc.eval_driving as eval_driving
 from llm_mpc import RaceLLMMPC as RaceLLM 
-from tests.mpc_tester.mpc_tester import Tester as MPCTester
+from tests.mpc_tester.mpc_tester import TrainingTester as MPCTester
 
 load_dotenv(find_dotenv())
 HUGGINGFACEHUB_API_TOKEN = os.getenv("HUGGINGFACEHUB_API_TOKEN")
@@ -460,16 +460,16 @@ def evaluate_model(model, shared_ros, tokenizer, host_ip, chat_template="qwen-2.
     print("#########################################################")
     print(f"DOING EVAL WITH HOST IP: {host_ip}")
     
-    tester = MPCTester(hf_token=HUGGINGFACEHUB_API_TOKEN, 
-                openai_token=OPENAI_API_TOKEN,
-                model_type='custom',
-                custom_model=model,
-                shared_ros=shared_ros,
-                run_name=run_name,
-                step=step,
-                custom_tokenizer=tokenizer,
-                custom_chat_template=chat_template,
-                host_ip=host_ip) 
+    tester = MPCTester(
+        openai_token=OPENAI_API_TOKEN,
+        custom_model=model,
+        shared_ros=shared_ros,
+        run_name=run_name,
+        step=step,
+        custom_tokenizer=tokenizer,
+        custom_chat_template=chat_template,
+        host_ip=host_ip
+    ) 
 
     # Run tests and plot results
     reports = tester.run_tests(num_tests=None, num_memories=5)

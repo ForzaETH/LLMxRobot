@@ -48,8 +48,8 @@ grpo:
   num_generations: 4
   max_prompt_length: 500
   max_completion_length: 750
-  max_steps: 75
-  save_steps: 25
+  max_steps: 750
+  save_steps: 250
   max_grad_norm: 0.1
 
 # === Dataset ===
@@ -59,8 +59,8 @@ dataset:
 
 # === Evaluation ===
 evaluation:
-  evaluation_on: false
-  eval_interval_steps: 400
+  evaluation_on: true
+  eval_interval_steps: 250
 
 # === Tokens ===
 tokens:

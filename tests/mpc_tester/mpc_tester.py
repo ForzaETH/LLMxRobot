@@ -3,17 +3,18 @@ from datetime import datetime
 from dotenv import load_dotenv, find_dotenv
 from langchain_experimental.llm_bash.bash import BashProcess
 from llm_mpc import RaceLLMMPC, MODEL_OPTIONS
-from inference.inf_pipeline import CHAT_TEMPLATE_OPTIONS
+from inference.inf_pipeline import CHAT_TEMPLATE_OPTIONS, RaceLLMPipeline
 import matplotlib.pyplot as plt
 
 TEST_OPTIONS = ['center', 'reverse', 'refvel', 'smooth']
-
+    
 class Tester:
-    def __init__(self, openai_token, model_type, model_dir, quant, run_name, step, host_ip):
+    def __init__(self, openai_token, model_type, model_dir, quant, run_name, step, host_ip, ros=None):
         self.racechat: RaceLLMMPC = RaceLLMMPC(openai_token=openai_token, 
                                                model=model_type, 
                                                model_dir=model_dir,
                                                quant=quant,
+                                               ros=ros,
                                                host_ip=host_ip,)
         
         self.model_name = model_type
@@ -178,11 +179,11 @@ class Tester:
                 results = [result]
     
             try:
-                plot_path = tester.plot_results(results, default_rmse=default_results)
+                plot_path = self.plot_results(results, default_rmse=default_results)
             except Exception as e:
                 print(f"Error plotting results: {e}")
                 plot_path = os.path.join(self.eval_dir, f"{test_case}_evaluation_results.png")
-            tester.generate_md_report(results, plot_path, default_results)
+            self.generate_md_report(results, plot_path, default_results)
 
     def run_single_test(self, test_case: str, num_tests: int):
         results = []
@@ -331,9 +332,9 @@ class Tester:
                     print(f"Skipping malformed line: {line.strip()}")
                     continue
 
-        plot_path = tester.plot_results(results)
+        plot_path = self.plot_results(results)
         print("USING DUMMY DEFAULT RMSE VALUE FOR REPORTING PURPOSES")
-        tester.generate_md_report(results, plot_path, 69)
+        self.generate_md_report(results, plot_path, 69)
 
     def generate_md_report(self, results, plot_path, default_rmse):
         test_case = results[0]['case']
@@ -355,6 +356,34 @@ class Tester:
                 f.write(f"- **Memory Sources**: {result['mem_sources']}\n\n")
 
         print(f"Markdown report generated at: {report_path}")
+
+# Wrapper for running eval during RL-training
+class TrainingTester(Tester):
+    def __init__(self,
+                 openai_token, 
+                 custom_model,
+                 shared_ros,  
+                 run_name, 
+                 step,
+                 custom_tokenizer,
+                 custom_chat_template,
+                 host_ip,
+                 ):
+        super().__init__(openai_token=openai_token, 
+                         model_type='training',
+                         model_dir=None, 
+                         quant=False,
+                         run_name=run_name,
+                         step=step,
+                         host_ip=host_ip,
+                         ros=shared_ros) 
+        # Overwrite the LLM with the custom model
+        training_llm = RaceLLMPipeline(chat_template=custom_chat_template, model=custom_model, tokenizer=custom_tokenizer, load_in_4bit=True)
+        self.racechat.llm = training_llm
+        self.racechat.custom = True
+        self.racechat.use_openai = False
+        print(f"Testing in TrainingTester using custom model: {custom_model} with tokenizer: {custom_tokenizer} and chat template: {custom_chat_template}")
+            
 
 
 if __name__ == '__main__':

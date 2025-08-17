@@ -50,6 +50,7 @@ Create a `.env` file in the root directory with the following content:
 ```bash
 HUGGINGFACEHUB_API_TOKEN="<your_huggingface_token>"
 OPENAI_API_TOKEN="<your_openai_token>"
+WANDB_API_KEY="<your_wandb_api_key>" # Optional
 ```
 This is needed for downloading models and using OpenAI APIs which is required if you want to use `gpt-4o` or for using the modules with their RAG embeddings. **Make sure to keep this file private!**
 
@@ -65,7 +66,7 @@ huggingface-cli download nibauman/race_llm-Q5_K_M-GGUF --local-dir models/race_l
 
 ## 🧠 Usage
 
-This repo integrates with the [ForzaETH Race Stack](https://github.com/ForzaETH/race_stack). Follow their installation instructions and ensure your `ROS_MASTER_URI` is correctly configured (see [example line](https://github.com/ForzaETH/race_stack/blob/main/.devcontainer/.install_utils/bashrc_ext#L12)) in this readme we use 192.168.192.75 as an example (Check $ROS_HOSTNAME when running the race_stack)!
+This repo integrates with the [ForzaETH Race Stack](https://github.com/ForzaETH/race_stack). Follow their installation instructions and ensure your `ROS_MASTER_URI` is correctly configured (see [example line](https://github.com/ForzaETH/race_stack/blob/main/.devcontainer/.install_utils/bashrc_ext#L12)) in this readme we use 192.168.192.75 as an example!
 
 ### On the Robot Stack
 Run each command in a separate terminal.
@@ -99,17 +100,32 @@ python3 llm_mpc.py --model custom --model_dir models/race_llm_q5 --hostip 192.16
 
 ## 🏋️ Training
 
-To train a new LoRA adapter on synthetic data:
+To train a new LoRA adapter on synthetic data with Supervised Fine-Tuning (SFT) akin to *Enhancing Autonomous Driving Systems with On-Board Deployed Large Language Models* [here](https://arxiv.org/abs/2504.11514), you can use the following command:
 
 ```bash
 python3 -m train.sft_train --config train/config/sft_train.yaml
 ```
 
-You can modify `sft_train.yaml` to change the model or dataset. Default setup:
+You can modify `sft_train.yaml` to change training parameters. Default setup:
 
-- Base: `unsloth/Qwen2.5-7B-Instruct`
-- Dataset: `train/dataset/`
-- Output: `train/outputs/`
+- Base Model: `unsloth/Qwen2.5-7B-Instruct`
+
+To train the DecisionxLLM through **static Reinforcement Learning** akin to *RobotxR1: Enabling Embodied Robotic Intelligence on Large Language Models through Closed-Loop Reinforcement Learning* [here](https://arxiv.org/abs/2505.03238), you can use the following command:
+
+```bash
+python3 -m train.rl_decision_train --config train/config/rl_decision_train.yaml
+```
+
+Modify `rl_decision_train.yaml` to change training parameters. Default setup:
+- Base Model: `Qwen/Qwen2.5-3B-Instruct`
+
+To train the MPCxLLM through **feedback driven Reinforcement Learning** akin to *RobotxR1: Enabling Embodied Robotic Intelligence on Large Language Models through Closed-Loop Reinforcement Learning* [here](https://arxiv.org/abs/2505.03238), you can use the following command:
+
+```bash
+python3 -m train.rl_mpc_train --config train/config/rl_mpc_train.yaml
+```
+Modify `rl_mpc_train.yaml` to change training parameters. Default setup:
+- Base Model: `Qwen/Qwen2.5-3B-Instruct`
 
 ---
 
@@ -147,11 +163,24 @@ This work would not have been possible without the great work of other repositor
 
 If this repository is useful for your research, please consider citing our work:
 
+**Enhancing Autonomous Driving Systems with On-Board Deployed Large Language Models:**
 ```bibtex
 @article{baumann2025enhancing,
   title={Enhancing Autonomous Driving Systems with On-Board Deployed Large Language Models},
   author={Baumann, Nicolas and Hu, Cheng and Sivasothilingam, Paviththiren and Qin, Haotong and Xie, Lei and Magno, Michele and Benini, Luca},
   journal={arXiv preprint arXiv:2504.11514},
   year={2025}
+}
+```
+**RobotxR1: Enabling Embodied Robotic Intelligence on Large Language Models through Closed-Loop Reinforcement Learning:**
+```bibtex
+@misc{boyle2025robotxr1enablingembodiedrobotic,
+      title={RobotxR1: Enabling Embodied Robotic Intelligence on Large Language Models through Closed-Loop Reinforcement Learning}, 
+      author={Liam Boyle and Nicolas Baumann and Paviththiren Sivasothilingam and Michele Magno and Luca Benini},
+      year={2025},
+      eprint={2505.03238},
+      archivePrefix={arXiv},
+      primaryClass={cs.RO},
+      url={https://arxiv.org/abs/2505.03238}, 
 }
 ```
