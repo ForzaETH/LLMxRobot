@@ -60,7 +60,7 @@ dataset:
 # === Evaluation ===
 evaluation:
   evaluation_on: true
-  eval_interval_steps: 250
+  eval_interval_steps: 2
 
 # === Tokens ===
 tokens:
