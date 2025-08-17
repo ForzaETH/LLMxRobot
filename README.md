@@ -72,7 +72,7 @@ Run each command in a separate terminal.
 ```bash
 roscore
 roslaunch stack_master base_system.launch map_name:=f racecar_version:=NUC2 sim:=true
-roslaunch stack_master timetrials.launch ctrl_algo:=KMPC
+roslaunch stack_master time_trials.launch ctrl_algo:=KMPC
 roslaunch rosbridge_server rosbridge_websocket.launch address:=192.168.192.75
 ```
 
