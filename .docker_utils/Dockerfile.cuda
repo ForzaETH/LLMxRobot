@@ -2,8 +2,6 @@
 FROM nvidia/cuda:11.8.0-devel-ubuntu20.04
 SHELL [ "/bin/bash", "-c" ]
 
-# CUDA ARCH 86 for RTX3090; 89 for RTX4070
-ARG CUDA_ARCH=86 
 # Set a non-interactive frontend (avoids some prompts)
 ARG DEBIAN_FRONTEND=noninteractive
 
@@ -61,6 +59,8 @@ RUN git clone --recursive https://github.com/HazyResearch/flash-attention.git /t
  && pip install . \
  && rm -rf /tmp/flash-attn
 
+ # CUDA ARCH 86 for RTX3090; 89 for RTX4070
+ARG CUDA_ARCH=86 
 
 # Install llama-cpp-python seperately because of GPU support
 # Set ENV with CUDA arch
