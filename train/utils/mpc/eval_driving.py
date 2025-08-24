@@ -2,7 +2,7 @@ import numpy as np
 from llm_mpc import RaceLLMMPC
 
 DRIVING_CASES =  [
-    #MAP: circle (params taken from git hash: 0563a6426a856689ced171a12623a6993f0af8e8)
+    #MAP: circle
     # Baseline params are taken from train on circle
     {"human_prompt":"Drive on the centerline", "evaluation_function": "center_rmse", "baseline_rmse": 1.201},
     {"human_prompt":"Drive on the racing line", "evaluation_function": "raceline_rmse", "baseline_rmse": 0.11},
@@ -11,7 +11,7 @@ DRIVING_CASES =  [
     {"human_prompt":"Drive smoothly", "evaluation_function": "smooth_rmse", "baseline_rmse": 2.749},
 ]
 
-# TODO: this way it is just sampling 1k samples, but in every part of the track can be different which is sucky
+# This way it is just sampling 1k samples, but in every part of the track can be different unless using circle map
 SAMPLE_NUMBER = 1000
 
 # RMSE calculations
