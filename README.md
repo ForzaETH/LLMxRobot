@@ -42,7 +42,7 @@ Check out the Wandb report of the training runs [here](https://wandb.ai/CoRL-hei
 
 3. Attach to the container:
    ```bash
-   docker exec -it embodiedai /bin/bash
+   docker exec -it embodiedai_dock /bin/bash
    ```
    or use VS Code Remote Containers.
 
