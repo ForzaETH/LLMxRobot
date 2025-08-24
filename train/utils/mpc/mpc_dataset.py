@@ -64,7 +64,7 @@ class MPCDatasetGRPO(Dataset):
             Formatted prompt string
         """
         # Hints are empty if not using RAG
-                # Query the index and pass the result to the command chain for processing
+        # Query the index and pass the result to the command chain for processing
         RAG_query = f"""
         Task: {human_prompt}\n
         """
