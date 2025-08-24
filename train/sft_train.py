@@ -15,6 +15,7 @@ from typing import Any, Dict
 load_dotenv(find_dotenv())
 
 HUGGINGFACEHUB_API_TOKEN = os.getenv("HUGGINGFACEHUB_API_TOKEN")
+WANDB_API_KEY = os.getenv("WANDB_API_KEY", None)  # Optional, can be set by user in .env file
 
 def preprocess(text, chat_template="phi-3", answer=False):
     if chat_template == "phi-3":

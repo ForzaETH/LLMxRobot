@@ -1,0 +1,72 @@
+# === General Training Configuration ===
+training:
+  out_dir: "train/outputs"
+  train_bool: true
+  use_rag: true
+  lora_rank: 64
+  chat_template: "qwen-2.5"
+
+# === Weights & Biases ===
+wandb:
+  enabled: true
+  project: "decision_grpo"
+  api_key: "${WANDB_API_KEY}"
+
+# === Model and Tokenizer ===
+model:
+  base_model: "Qwen/Qwen2.5-3B-Instruct"
+  load_in_4bit: true
+  max_seq_length: 2048
+  fast_inference: true
+  gpu_memory_utilization: 0.5
+  lora_alpha: 64
+  target_modules:
+    - "q_proj"
+    - "k_proj"
+    - "v_proj"
+    - "o_proj"
+    - "gate_proj"
+    - "up_proj"
+    - "down_proj"
+  use_gradient_checkpointing: "unsloth"
+  random_state: 3407
+
+# === GRPO ===
+grpo:
+  use_vllm: true
+  learning_rate: 0.000005
+  adam_beta1: 0.9
+  adam_beta2: 0.99
+  weight_decay: 0.1
+  warmup_ratio: 0.1
+  lr_scheduler_type: "cosine"
+  optim: "adamw_8bit"
+  logging_steps: 1
+  per_device_train_batch_size: 1
+  gradient_accumulation_steps: 1
+  num_generations: 8
+  max_prompt_length: 250
+  max_completion_length: 250
+  max_steps: 800
+  save_steps: 250
+  max_grad_norm: 0.1
+
+# === Dataset ===
+dataset:
+  raw_robot_states_dir: "/embodiedai/train/dataset/rl_decision/raw_states"
+  test_cases_path: "train/utils/eval_states.py"
+  mem_nb: 5
+  shuffle: true
+  from_raw: false
+
+# === Evaluation ===
+evaluation:
+  robot_states_dir: "/embodiedai/tests/decision_tester/robot_states"
+  use_rag: true
+  eval_interval_steps: 400
+
+# === Tokens ===
+tokens:
+  huggingfacehub: "${HUGGINGFACEHUB_API_TOKEN}"
+  openai: "${OPENAI_API_TOKEN}"
+  wandb: "${WANDB_API_KEY}"
