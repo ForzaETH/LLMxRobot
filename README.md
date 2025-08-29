@@ -23,8 +23,9 @@ In our [CoRL 2025 paper](https://arxiv.org/abs/2505.03238), **RobotxR1: Enabling
   <img src=".misc/corl_abstract_figure.png" width="600" alt="RobotxLLM Overview"\>
 </p\>
 
-Check out the Wandb report of the training runs [here](https://wandb.ai/CoRL-heist-2025/mpc_grpo/reports/RobotxR1-Training-Runs--VmlldzoxNDEwOTczNQ?accessToken=a2qws19tg5fuwv7bi2mto42lbjj9l83hyz3feib3vj6x6dp25ul8j6wqhvkiuhcq).
-The Youtube video accompanying the paper can be found [here](https://youtu.be/6mqb9w9n1zs).
+📊 Check out the Wandb report of the training runs [here](https://wandb.ai/CoRL-heist-2025/mpc_grpo/reports/RobotxR1-Training-Runs--VmlldzoxNDEwOTczNQ?accessToken=a2qws19tg5fuwv7bi2mto42lbjj9l83hyz3feib3vj6x6dp25ul8j6wqhvkiuhcq).
+
+📹 The Youtube video accompanying the paper can be found [here](https://youtu.be/6mqb9w9n1zs).
 
 ## 🚀 Installation
 
