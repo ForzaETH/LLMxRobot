@@ -389,6 +389,44 @@ class TrainingTester(Tester):
         self.racechat.use_openai = False
         print(f"Testing in TrainingTester using custom model: {custom_model} with tokenizer: {custom_tokenizer} and chat template: {custom_chat_template}")
     
+
+def generate_summary_report(reports: dict, run_name: str, save_dir: str = 'tests/mpc_tester/eval'):
+    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+    report_dir = os.path.join(save_dir, run_name)
+    os.makedirs(report_dir, exist_ok=True)
+    report_path = os.path.join(report_dir, f"_summary_report_{timestamp}.md")
+
+    with open(report_path, 'w') as f:
+        # Header
+        f.write(f"# Evaluation Summary for {run_name.split('_')[0]}\n\n")
+        f.write(f"**Run Name:** {run_name}\n")
+        f.write(f"**Date:** {timestamp}\n\n")
+        f.write("## Test Case Results\n")
+
+        for test_case, case_data in reports.items():
+            avg_rmse = case_data["avg_rmse"]
+            std_rmse = case_data["std_rmse"]
+            avg_default_rmse = case_data["avg_default_rmse"]
+            std_default_rmse = case_data["std_default_rmse"]
+            improvement = case_data["avg_rmse_improvement"]*100
+            f.write(f"### {test_case.capitalize()}\n")
+            f.write(f"- **Average RMSE**(excluding failed subcases): {avg_rmse:.3f} ± {std_rmse:.3f} m\n")
+            f.write(f"- **Average Default RMSE**: {avg_default_rmse:.3f} ± {std_default_rmse:.3f} m\n")
+            f.write(f"- **Improvement Over Default**(excluding failed subcases): {improvement:.2f}%\n")
+            f.write(f"- **Subcases:**\n")
+            average_rmse = 0
+            for idx, subcase in case_data["subcases"].items():
+                rmse = subcase["result"]["rmse"]
+                default_rmse = subcase["default_rmse"]
+                f.write(f"  - Subcase {idx}: RMSE={rmse:.3f} m (Default={default_rmse:.3f}))\n")
+            f.write("\n")
+
+        f.write(f"---\nGenerated on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+
+    print(f"Markdown summary report saved to:\n{report_path}")
+    return report_path
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Run the Tester with a specified model.')
     parser.add_argument('--model', choices=MODEL_OPTIONS, help='The model to use for the Tester.')    
@@ -415,7 +453,8 @@ if __name__ == '__main__':
                     host_ip=args.host_ip) 
 
     # Run tests and plot results
-    tester.run_tests(num_tests=None, num_memories=5)
+    reports = tester.run_tests(num_tests=None, num_memories=5)
+    generate_summary_report(reports=reports, run_name=run_name)
     
     # Example command: 
     # python3 -m tests.mpc_tester.mpc_tester --model custom --model_dir nibauman/RobotxLLM_Qwen7B_SFT --host_ip 192.168.192.75 --chat_template qwen-2.5
