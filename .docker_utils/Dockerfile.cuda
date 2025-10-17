@@ -1,5 +1,5 @@
 # Use an official Nvidia runtime as a parent image
-FROM nvidia/cuda:11.8.0-devel-ubuntu20.04
+FROM nvidia/cuda:11.8.0-devel-ubuntu22.04
 SHELL [ "/bin/bash", "-c" ]
 
 # Set a non-interactive frontend (avoids some prompts)
